@@ -38,8 +38,7 @@ kube::multinode::main(){
   LATEST_STABLE_K8S_VERSION=$(curl -sSL "https://storage.googleapis.com/kubernetes-release/release/stable.txt")
   K8S_VERSION=${K8S_VERSION:-${LATEST_STABLE_K8S_VERSION}}
 
-  # TODO: Update to 3.0.3
-  ETCD_VERSION=${ETCD_VERSION:-"2.2.5"}
+  ETCD_VERSION=${ETCD_VERSION:-"3.0.4"}
 
   # The user gave us a list of etcd IPs separated by commas (ETCD_IPS)
   # Or, if they didn't, we use the MASTER_IP
@@ -59,6 +58,7 @@ kube::multinode::main(){
   done
 
   FLANNEL_VERSION=${FLANNEL_VERSION:-"0.5.5"}
+  FLANNEL_VERSION=${FLANNEL_VERSION:-"v0.6.1"}
   FLANNEL_IPMASQ=${FLANNEL_IPMASQ:-"true"}
   FLANNEL_BACKEND=${FLANNEL_BACKEND:-"udp"}
   FLANNEL_NETWORK=${FLANNEL_NETWORK:-"10.1.0.0/16"}
@@ -174,7 +174,7 @@ kube::multinode::start_flannel() {
     --privileged \
     -v /dev/net:/dev/net \
     -v ${FLANNEL_SUBNET_DIR}:${FLANNEL_SUBNET_DIR} \
-    gcr.io/google_containers/flannel-${ARCH}:${FLANNEL_VERSION} \
+    quay.io/coreos/flannel:${FLANNEL_VERSION}-${ARCH} \
     /opt/bin/flanneld \
       --etcd-endpoints=${ETCD_SERVERS} \
       --ip-masq="${FLANNEL_IPMASQ}" \
