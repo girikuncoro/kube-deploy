@@ -198,7 +198,8 @@ kube::multinode::start_k8s_master() {
   kube::log::status "Launching Kubernetes master components..."
 
   kube::multinode::make_shared_kubelet_dir
-
+  # Note that we use the node label to decide if the VM corresponding
+  # to the node exists.
   docker run -d \
     --net=host \
     --pid=host \
@@ -216,6 +217,7 @@ kube::multinode::start_k8s_master() {
       --cluster-domain=cluster.local \
       ${CNI_ARGS} \
       --hostname-override=${IP_ADDRESS} \
+      --node-labels="vm-hostname=${HOSTNAME}" \
       --v=2
 }
 
@@ -224,8 +226,9 @@ kube::multinode::start_k8s_worker() {
   kube::log::status "Launching Kubernetes worker components..."
 
   kube::multinode::make_shared_kubelet_dir
-
   # TODO: Use secure port for communication
+  # Note that we use the node label to decide if the VM corresponding
+  # to the node exists.
   docker run -d \
     --net=host \
     --pid=host \
@@ -241,6 +244,7 @@ kube::multinode::start_k8s_worker() {
       --cluster-domain=cluster.local \
       ${CNI_ARGS} \
       --hostname-override=${IP_ADDRESS} \
+      --node-labels="vm-hostname=${HOSTNAME}" \
       --v=2
 }
 
