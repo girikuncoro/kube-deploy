@@ -65,7 +65,6 @@ kube::multinode::main(){
     fi
   done
 
-  FLANNEL_VERSION=${FLANNEL_VERSION:-"0.5.5"}
   FLANNEL_VERSION=${FLANNEL_VERSION:-"v0.6.1"}
   FLANNEL_IPMASQ=${FLANNEL_IPMASQ:-"true"}
   FLANNEL_BACKEND=${FLANNEL_BACKEND:-"udp"}
