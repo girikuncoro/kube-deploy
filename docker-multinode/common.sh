@@ -41,6 +41,23 @@ kube::multinode::main(){
   # TODO: Update to 3.0.3
   ETCD_VERSION=${ETCD_VERSION:-"2.2.5"}
 
+  # The user gave us a list of etcd IPs separated by commas (ETCD_IPS)
+  # Or, if they didn't, we use the MASTER_IP
+  # We extract the first IP to use to POST data to
+  # We also create ETCD_SERVERS, which are URLs that can be passed to flannel
+  ETCD_IPS=${ETCD_IPS:-$MASTER_IP}
+  ETCD_IP_ARRAY=(${ETCD_IPS//,/ })
+  ETCD_IP=${ETCD_IP_ARRAY[0]}
+  ETCD_SERVERS=""
+  for i in "${!ETCD_IP_ARRAY[@]}"
+  do
+    if [[ i -eq 0 ]]; then
+      ETCD_SERVERS="http://${ETCD_IP_ARRAY[i]}:2379"
+    else
+      ETCD_SERVERS="${ETCD_SERVERS},http://${ETCD_IP_ARRAY[i]}:2379"
+    fi
+  done
+
   FLANNEL_VERSION=${FLANNEL_VERSION:-"0.5.5"}
   FLANNEL_IPMASQ=${FLANNEL_IPMASQ:-"true"}
   FLANNEL_BACKEND=${FLANNEL_BACKEND:-"udp"}
@@ -91,6 +108,8 @@ kube::multinode::log_variables() {
   # Output the value of the variables
   kube::log::status "K8S_VERSION is set to: ${K8S_VERSION}"
   kube::log::status "ETCD_VERSION is set to: ${ETCD_VERSION}"
+  kube::log::status "ETCD_IP is set to ${ETCD_IP}"
+  kube::log::status "ETCD_SERVERS is set to ${ETCD_SERVERS}"
   kube::log::status "FLANNEL_VERSION is set to: ${FLANNEL_VERSION}"
   kube::log::status "FLANNEL_IPMASQ is set to: ${FLANNEL_IPMASQ}"
   kube::log::status "FLANNEL_NETWORK is set to: ${FLANNEL_NETWORK}"
@@ -141,7 +160,7 @@ kube::multinode::start_flannel() {
 
   # Set flannel net config (when running on master)
   if [[ "${MASTER_IP}" == "localhost" ]]; then
-    curl -sSL http://localhost:2379/v2/keys/coreos.com/network/config -XPUT \
+    curl -sSL http://${ETCD_IP}:2379/v2/keys/coreos.com/network/config -XPUT \
       -d value="{ \"Network\": \"${FLANNEL_NETWORK}\", \"Backend\": {\"Type\": \"${FLANNEL_BACKEND}\"}}"
   fi
 
@@ -154,7 +173,7 @@ kube::multinode::start_flannel() {
     -v ${FLANNEL_SUBNET_DIR}:${FLANNEL_SUBNET_DIR} \
     gcr.io/google_containers/flannel-${ARCH}:${FLANNEL_VERSION} \
     /opt/bin/flanneld \
-      --etcd-endpoints=http://${MASTER_IP}:2379 \
+      --etcd-endpoints=${ETCD_SERVERS} \
       --ip-masq="${FLANNEL_IPMASQ}" \
       --iface="${IP_ADDRESS}"
 
@@ -187,6 +206,7 @@ kube::multinode::start_k8s_master() {
     --restart=${RESTART_POLICY} \
     --name kube_kubelet_$(kube::helpers::small_sha) \
     ${KUBELET_MOUNTS} \
+    -v /etc/kubernetes:/etc/kubernetes:rw \
     gcr.io/google_containers/hyperkube-${ARCH}:${K8S_VERSION} \
     /hyperkube kubelet \
       --allow-privileged \

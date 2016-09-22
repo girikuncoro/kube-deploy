@@ -20,7 +20,18 @@ source $(dirname "${BASH_SOURCE}")/common.sh
 # Set MASTER_IP to localhost when deploying a master
 MASTER_IP=localhost
 
+# Check if the user specified the etcd IPs
+# We do it before we call main because it will set ETCD_IPS.
+if [[ ! -z "${ETCD_IPS}" ]]; then
+  EDIT_ETCD="true"
+fi
+
 kube::multinode::main
+
+# If an etcd server was specified, then update our configuration to point at it
+if [[ ! -z ${EDIT_ETCD} ]]; then
+  sed -i -e "s@etcd-servers.*\"@etcd-servers=${ETCD_SERVERS}\"@" /etc/kubernetes/manifests-multi/master-multi.json
+fi
 
 kube::multinode::log_variables
 
@@ -29,13 +40,9 @@ kube::multinode::turndown
 if [[ ${USE_CNI} == "true" ]]; then
   kube::cni::ensure_docker_settings
 
-  kube::multinode::start_etcd
-
   kube::multinode::start_flannel
 else
   kube::bootstrap::bootstrap_daemon
-
-  kube::multinode::start_etcd
 
   kube::multinode::start_flannel
 
