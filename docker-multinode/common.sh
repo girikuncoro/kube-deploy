@@ -136,9 +136,12 @@ kube::multinode::start_etcd() {
     gcr.io/google_containers/etcd-${ARCH}:${ETCD_VERSION} \
     /usr/local/bin/etcd \
       --listen-client-urls=http://0.0.0.0:2379,http://0.0.0.0:4001 \
-      --advertise-client-urls=http://localhost:2379,http://localhost:4001 \
+      --advertise-client-urls=${ETCD_ADVERTISE_URL} \
       --listen-peer-urls=http://0.0.0.0:2380 \
-      --data-dir=/var/etcd/data
+      --data-dir=/var/etcd/data \
+    --initial-cluster=${ETCD_CLUSTER} \
+    --name=etcd${ETCD_NODE_ID} \
+    --initial-advertise-peer-urls=${ETCD_PEER_URL}
 
   # Wait for etcd to come up
   local SECONDS=0
