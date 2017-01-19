@@ -49,6 +49,8 @@ else
   kube::bootstrap::restart_docker
 fi
 
+kube::helpers::check_docker
+
 kube::multinode::start_k8s_master
 
 kube::log::status "Done. It may take about a minute before apiserver is up."

@@ -41,6 +41,8 @@ else
   kube::bootstrap::restart_docker
 fi
 
+kube::helpers::check_docker
+
 kube::multinode::start_k8s_worker
 
 # If under v1.4.0-alpha.3, run the proxy
