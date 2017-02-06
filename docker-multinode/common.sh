@@ -235,7 +235,8 @@ kube::multinode::start_k8s_master() {
     gcr.io/google_containers/hyperkube-${ARCH}:${K8S_VERSION} \
     /hyperkube kubelet \
       --allow-privileged \
-      --api-servers=http://localhost:8080 \
+      --anonymous-auth=true \
+      --api-servers=https://localhost:6443 \
       --config=/etc/kubernetes/manifests-multi \
       --cluster-dns=10.0.0.10 \
       --cluster-domain=cluster.local \
@@ -244,6 +245,7 @@ kube::multinode::start_k8s_master() {
       ${CNI_ARGS} \
       ${CONTAINERIZED_FLAG} \
       --hostname-override=${IP_ADDRESS} \
+      --kubeconfig=/var/lib/kubelet/kubeconfig/kubeconfig.yaml \
       --node-labels="vm-hostname=${HOSTNAME}" \
       --v=2
 }
@@ -267,7 +269,8 @@ kube::multinode::start_k8s_worker() {
     gcr.io/google_containers/hyperkube-${ARCH}:${K8S_VERSION} \
     /hyperkube kubelet \
       --allow-privileged \
-      --api-servers=http://${MASTER_IP}:8080 \
+      --anonymous-auth=true \
+      --api-servers=https://${MASTER_IP}:6443 \
       --cluster-dns=10.0.0.10 \
       --cluster-domain=cluster.local \
       --cloud-provider=photon \
@@ -275,6 +278,7 @@ kube::multinode::start_k8s_worker() {
       ${CNI_ARGS} \
       ${CONTAINERIZED_FLAG} \
       --hostname-override=${IP_ADDRESS} \
+      --kubeconfig=/var/lib/kubelet/kubeconfig/kubeconfig.yaml \
       --node-labels="vm-hostname=${HOSTNAME}" \
       --v=2
 }
@@ -290,7 +294,7 @@ kube::multinode::start_k8s_worker_proxy() {
     --restart=${RESTART_POLICY} \
     gcr.io/google_containers/hyperkube-${ARCH}:${K8S_VERSION} \
     /hyperkube proxy \
-        --master=http://${MASTER_IP}:8080 \
+        --master=https://${MASTER_IP}:6443 \
         --cloud-provider=photon \
         --cloud-config=/etc/kubernetes/pc_cloud.conf \
         --v=2
