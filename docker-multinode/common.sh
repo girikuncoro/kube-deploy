@@ -240,8 +240,6 @@ kube::multinode::start_k8s_master() {
       --config=/etc/kubernetes/manifests-multi \
       --cluster-dns=10.0.0.10 \
       --cluster-domain=cluster.local \
-      --cloud-provider=photon \
-      --cloud-config=/etc/kubernetes/pc_cloud.conf \
       ${CNI_ARGS} \
       ${CONTAINERIZED_FLAG} \
       --hostname-override=${IP_ADDRESS} \
@@ -273,8 +271,6 @@ kube::multinode::start_k8s_worker() {
       --api-servers=https://${MASTER_IP}:6443 \
       --cluster-dns=10.0.0.10 \
       --cluster-domain=cluster.local \
-      --cloud-provider=photon \
-      --cloud-config=/etc/kubernetes/pc_cloud.conf \
       ${CNI_ARGS} \
       ${CONTAINERIZED_FLAG} \
       --hostname-override=${IP_ADDRESS} \
@@ -294,10 +290,8 @@ kube::multinode::start_k8s_worker_proxy() {
     --restart=${RESTART_POLICY} \
     gcr.io/google_containers/hyperkube-${ARCH}:${K8S_VERSION} \
     /hyperkube proxy \
-        --master=https://${MASTER_IP}:6443 \
-        --cloud-provider=photon \
-        --cloud-config=/etc/kubernetes/pc_cloud.conf \
-        --v=2
+      --master=https://${MASTER_IP}:6443 \
+      --v=2
 }
 
 # Turndown the local cluster
