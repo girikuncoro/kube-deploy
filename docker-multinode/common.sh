@@ -300,12 +300,26 @@ kube::multinode::turndown(){
   # Check if docker bootstrap is running
   DOCKER_BOOTSTRAP_PID=$(ps aux | grep ${BOOTSTRAP_DOCKER_SOCK} | grep -v "grep" | awk '{print $2}')
   if [[ ! -z ${DOCKER_BOOTSTRAP_PID} ]]; then
-
     kube::log::status "Killing docker bootstrap..."
 
-    # Kill the bootstrap docker daemon and it's containers
-    docker -H ${BOOTSTRAP_DOCKER_SOCK} rm -f $(docker -H ${BOOTSTRAP_DOCKER_SOCK} ps -q) >/dev/null 2>/dev/null
-    kill ${DOCKER_BOOTSTRAP_PID}
+    # Use systemctl commands if available
+    if kube::helpers::command_exists systemctl; then
+      # We are stopping docker bootstrap and ensuring that it is stopped
+      # before we start it instead of restarting the container due
+      # to a race condition of continuing the Kubernetes script
+      # and failing while systemd is restarting docker bootstrap.
+      systemctl stop docker-bootstrap
+      is_bootstrap_docker=true
+      kube::helpers::check_docker_down ${is_bootstrap_docker}
+      systemctl start docker-bootstrap
+      kube::helpers::check_docker_up ${is_bootstrap_docker}
+    else
+
+      # Kill the bootstrap docker daemon and it's containers
+      docker -H ${BOOTSTRAP_DOCKER_SOCK} rm -f $(docker -H ${BOOTSTRAP_DOCKER_SOCK} ps -q) >/dev/null 2>/dev/null
+      kill ${DOCKER_BOOTSTRAP_PID}
+
+    fi
   fi
 
   kube::log::status "Killing all kubernetes containers..."
@@ -386,8 +400,67 @@ kube::helpers::small_sha(){
   date | md5sum | cut -c-5
 }
 
-# Wait and retry till docker is reachable
-kube::helpers::check_docker() {
+# Wait and retry until docker is no longer reachable
+# Takes a boolean argument: is_bootstrap_docker to designate if it is checking
+# the normal docker service or the bootstrap docker. If is_bootstrap_docker is true
+# it checks bootstrap docker.
+kube::helpers::check_docker_down() {
+  is_bootstrap_docker=$1
+  if [ "$is_bootstrap_docker" == true ]; then
+    bootstrap="Bootstrap"
+  else
+    bootstrap=""
+  fi
+
+  stop_retry_max="5"
+  stop_retry="0"
+  retry_max="20"
+  while [ "$stop_retry" -lt "$stop_retry_max" ]
+  do
+    retry="0"
+    while [ "$retry" -lt "$retry_max" ]
+    do
+      if [ "$is_bootstrap_docker" == true ]; then
+        docker ${BOOTSTRAP_DOCKER_PARAM} version
+      else
+         docker version
+      fi
+      if [ "$?" != "0" ]; then
+        kube::log::status "${bootstrap} Docker daemon has stopped!"
+        break 2
+      fi
+      sleep 1
+      retry=`expr $retry + 1`
+    done
+      kube::log::status "${bootstrap} Docker is still reachable after $retry_max retries, attempting to stop again
+      ($stop_retry/$stop_retry_max)"
+      sleep 1
+      if [ "$is_bootstrap_docker" == true ]; then
+        systemctl stop docker-bootstrap
+      else
+        systemctl stop docker
+      fi
+
+      stop_retry=`expr $stop_retry + 1`
+  done
+
+  if [ "$retry" -eq "$retry_max" ] && [ "$stop_retry" -eq "$stop_retry_max" ]
+  then
+    kube::log::fatal "${bootstrap} Docker daemon is still up."
+  fi
+
+}
+
+# Wait and retry until docker is reachable
+# Takes a boolean argument: is_bootstrap_docker to designate if it is checking
+# the normal docker service or the bootstrap docker. If is_bootstrap_docker is true
+# it checks bootstrap docker.
+kube::helpers::check_docker_up() {
+  is_bootstrap_docker=$1
+  if [ "$is_bootstrap_docker" == true ]; then
+    bootstrap="Bootstrap"
+  fi
+
   restart_retry_max="5"
   restart_retry="0"
   retry_max="20"
@@ -396,28 +469,37 @@ kube::helpers::check_docker() {
     retry="0"
     while [ "$retry" -lt "$retry_max" ]
     do
-      docker version
+       if [ "$is_bootstrap_docker" == true ]; then
+        docker ${BOOTSTRAP_DOCKER_PARAM} version
+      else
+         docker version
+      fi
       if [ "$?" == "0" ]; then
-        kube::log::status "Docker daemon is up and running!"
+        kube::log::status "${bootstrap} Docker daemon is up and running!"
         break 2
       fi
       sleep 1
       retry=`expr $retry + 1`
     done
-      kube::log::fatal "Docker unreachable after $retry_max retries, restarting docker ($restart_retry/$restart_retry_max)"
+      kube::log::status "${bootstrap} Docker unreachable after $retry_max retries, restarting docker ($restart_retry/$restart_retry_max)"
       # This addresses the issue where docker fails to start due to the bridge address is in use.
       # We remove the docker network files that contain the network settings
       # of the docker because docker can exit without properly closing the bridge address.
       rm -rf /var/lib/docker/network/files
-      systemctl restart docker
+      if [ "$is_bootstrap_docker" == true ]; then
+        systemctl restart docker-bootstrap
+      else
+        systemctl restart docker
+      fi
       sleep 1
       restart_retry=`expr $restart_retry + 1`
   done
 
   if [ "$retry" -eq "$retry_max" ] && [ "$restart_retry" -eq "$restart_retry_max" ]
   then
-    kube::log::status "Docker daemon is not up yet!"
+    kube::log::fatal "${bootstrap} Docker daemon is not up yet!"
   fi
+
 }
 
 # Get the architecture for the current machine
