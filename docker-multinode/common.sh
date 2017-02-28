@@ -244,7 +244,7 @@ kube::multinode::start_k8s_master() {
       ${CONTAINERIZED_FLAG} \
       --hostname-override=${IP_ADDRESS} \
       --kubeconfig=/var/lib/kubelet/kubeconfig/kubeconfig.yaml \
-      --node-labels="vm-hostname=${HOSTNAME}" \
+      --node-labels="vm-hostname=${HOSTNAME},kubernetes.io/role=master" \
       --v=2
 }
 
