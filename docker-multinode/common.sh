@@ -237,7 +237,7 @@ kube::multinode::start_k8s_master() {
       --allow-privileged \
       --anonymous-auth=true \
       --api-servers=https://localhost:6443 \
-      --config=/etc/kubernetes/manifests-multi \
+      --pod-manifest-path=/etc/kubernetes/manifests-multi \
       --cluster-dns=10.0.0.10 \
       --cluster-domain=cluster.local \
       ${CNI_ARGS} \
