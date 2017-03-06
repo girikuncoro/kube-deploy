@@ -41,7 +41,7 @@ else
   kube::bootstrap::restart_docker
 fi
 
-kube::helpers::check_docker
+kube::helpers::check_docker_up false
 
 kube::multinode::start_k8s_worker
 
