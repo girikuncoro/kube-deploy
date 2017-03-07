@@ -101,7 +101,8 @@ kube::multinode::main(){
     -v /run:/run:rw \
     -v /var/lib/docker:/var/lib/docker:rw \
     ${KUBELET_MOUNT} \
-    -v /var/log/containers:/var/log/containers:rw"
+    -v /var/log/containers:/var/log/containers:rw \
+    -v /etc/kubernetes:/etc/kubernetes:rw"
 
   # Paths
   FLANNEL_SUBNET_DIR=${FLANNEL_SUBNET_DIR:-/run/flannel}
@@ -231,7 +232,6 @@ kube::multinode::start_k8s_master() {
     --restart=${RESTART_POLICY} \
     --name kube_kubelet_$(kube::helpers::small_sha) \
     ${KUBELET_MOUNTS} \
-    -v /etc/kubernetes:/etc/kubernetes:rw \
     gcr.io/google_containers/hyperkube-${ARCH}:${K8S_VERSION} \
     /hyperkube kubelet \
       --allow-privileged \
@@ -240,6 +240,8 @@ kube::multinode::start_k8s_master() {
       --pod-manifest-path=/etc/kubernetes/manifests-multi \
       --cluster-dns=10.0.0.10 \
       --cluster-domain=cluster.local \
+      --cloud-provider=photon \
+      --cloud-config=/etc/kubernetes/pc_cloud.config \
       ${CNI_ARGS} \
       ${CONTAINERIZED_FLAG} \
       --hostname-override=${IP_ADDRESS} \
@@ -271,6 +273,8 @@ kube::multinode::start_k8s_worker() {
       --api-servers=https://${MASTER_IP}:6443 \
       --cluster-dns=10.0.0.10 \
       --cluster-domain=cluster.local \
+      --cloud-provider=photon \
+      --cloud-config=/etc/kubernetes/pc_cloud.config \
       ${CNI_ARGS} \
       ${CONTAINERIZED_FLAG} \
       --hostname-override=${IP_ADDRESS} \
