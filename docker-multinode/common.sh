@@ -102,7 +102,8 @@ kube::multinode::main(){
     -v /var/lib/docker:/var/lib/docker:rw \
     ${KUBELET_MOUNT} \
     -v /var/log/containers:/var/log/containers:rw \
-    -v /etc/kubernetes:/etc/kubernetes:rw"
+    -v /etc/kubernetes:/etc/kubernetes:rw \
+    -v /dev:/dev:rw"
 
   # Paths
   FLANNEL_SUBNET_DIR=${FLANNEL_SUBNET_DIR:-/run/flannel}
