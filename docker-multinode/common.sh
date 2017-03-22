@@ -45,7 +45,7 @@ kube::multinode::main(){
   if [[ ${ARCH} == "arm" ]]; then
     ETCD_VERSION=${ETCD_VERSION:-"2.2.5"}
   else
-    ETCD_VERSION=${ETCD_VERSION:-"3.0.4"}
+    ETCD_VERSION=${ETCD_VERSION:-"3.0.17"}
   fi
 
   # The user gave us a list of etcd IPs separated by commas (ETCD_IPS)
