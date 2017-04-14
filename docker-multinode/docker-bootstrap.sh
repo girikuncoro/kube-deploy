@@ -102,7 +102,7 @@ kube::bootstrap::restart_docker_systemd(){
   sed -i.bak 's/^\(MountFlags=\).*/\1shared/' ${DOCKER_CONF}
   systemctl daemon-reload
   systemctl daemon-reload
-  
+
   # We are stopping docker and ensuring that it is stopped
   # before we start it instead of restarting the container due
   # to a race condition of continuing the Kubernetes script
