@@ -66,7 +66,7 @@ kube::bootstrap::restart_docker(){
   elif kube::helpers::command_exists apt-get; then
     DOCKER_CONF="/etc/default/docker"
     kube::helpers::backup_file ${DOCKER_CONF}
-        
+
     # Is there an uncommented DOCKER_OPTS line at all?
     if [[ -z $(grep "DOCKER_OPTS" $DOCKER_CONF | grep -v "#") ]]; then
       echo "DOCKER_OPTS=\"--mtu=${FLANNEL_MTU} --bip=${FLANNEL_SUBNET} \"" >> ${DOCKER_CONF}
@@ -102,7 +102,16 @@ kube::bootstrap::restart_docker_systemd(){
   sed -i.bak 's/^\(MountFlags=\).*/\1shared/' ${DOCKER_CONF}
   systemctl daemon-reload
   systemctl daemon-reload
-  systemctl restart docker
+  
+  # We are stopping docker and ensuring that it is stopped
+  # before we start it instead of restarting the container due
+  # to a race condition of continuing the Kubernetes script
+  # and failing while systemd is restarting docker.
+  systemctl stop docker
+  is_bootstrap_docker=false
+  kube::helpers::check_docker_down ${is_bootstrap_docker}
+  systemctl start docker
+  kube::helpers::check_docker_up ${is_bootstrap_docker}
 }
 
 kube::helpers::replace_mtu_bip(){

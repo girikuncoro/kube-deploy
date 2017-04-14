@@ -27,12 +27,12 @@ kube::multinode::main
 
 kube::multinode::log_variables
 
-kube::multinode::turndown
+# TODO: turndown from pc-1.2 is breaking docker daemon
+# kube::multinode::turndown
 
 if [[ ${USE_CNI} == "true" ]]; then
   kube::cni::ensure_docker_settings
 
-  kube::multinode::start_flannel
 else
   kube::bootstrap::bootstrap_daemon
 
@@ -41,7 +41,7 @@ else
   kube::bootstrap::restart_docker
 fi
 
-kube::helpers::check_docker
+kube::helpers::check_docker_up false
 
 kube::multinode::start_k8s_worker
 
