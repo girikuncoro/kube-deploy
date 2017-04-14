@@ -25,7 +25,7 @@ kube::multinode::turndown
 
 # We're running etcd in the bootstrap daemon, just
 # to make minimal changes to docker-multinode. It's
-# not necessary though, and we could remove that. 
+# not necessary though, and we could remove that.
 kube::bootstrap::bootstrap_daemon
 kube::multinode::start_etcd
 
