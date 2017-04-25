@@ -35,12 +35,12 @@ fi
 
 kube::multinode::log_variables
 
-kube::multinode::turndown
+# kube::multinode::turndown
 
 if [[ ${USE_CNI} == "true" ]]; then
   kube::cni::ensure_docker_settings
 
-  kube::multinode::start_flannel
+  # kube::multinode::start_flannel
 else
   kube::bootstrap::bootstrap_daemon
 
