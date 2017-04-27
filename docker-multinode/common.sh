@@ -115,9 +115,12 @@ kube::multinode::main(){
       -v /root/nsx-cni/opt/cni:/opt/cni"
     BOOTSTRAP_DOCKER_PARAM=""
     ETCD_NET_PARAM="-p 2379:2379 -p 2380:2380 -p 4001:4001"
+    # CNI_ARGS="\
+    #   --network-plugin=cni \
+    #   --network-plugin-dir=/opt/cni/net.d"
     CNI_ARGS="\
-      --network-plugin=cni \
-      --network-plugin-dir=/opt/cni/net.d"
+      --cni-conf-dir=/opt/cni/net.d \
+      --cni-bin-dir=/opt/cni/bin"
   fi
 }
 
