@@ -119,6 +119,7 @@ kube::multinode::main(){
     #   --network-plugin=cni \
     #   --network-plugin-dir=/opt/cni/net.d"
     CNI_ARGS="\
+      --network-plugin=cni \
       --cni-conf-dir=/opt/cni/net.d \
       --cni-bin-dir=/opt/cni/bin"
   fi
