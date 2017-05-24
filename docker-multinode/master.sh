@@ -35,12 +35,14 @@ fi
 
 kube::multinode::log_variables
 
-kube::multinode::turndown
+# TODO: race condition in turndown, doesn't start docker daemon
+# kube::multinode::turndown
 
 if [[ ${USE_CNI} == "true" ]]; then
   kube::cni::ensure_docker_settings
 
-  kube::multinode::start_flannel
+  curl -sSL http://${ETCD_IP}:2379/v2/keys/coreos.com/network/config -XPUT \
+    -d value="{ \"Network\": \"${FLANNEL_NETWORK}\", \"Backend\": {\"Type\": \"${FLANNEL_BACKEND}\"}}"
 else
   kube::bootstrap::bootstrap_daemon
 

@@ -110,11 +110,16 @@ kube::multinode::main(){
 
   if [[ ${USE_CNI} == "true" ]]; then
 
+    KUBELET_MOUNTS="\
+      ${KUBELET_MOUNTS} \
+      -v /opt/cni:/opt/cni
+      -v /etc/cni/net.d:/etc/cni/net.d"
     BOOTSTRAP_DOCKER_PARAM=""
     ETCD_NET_PARAM="-p 2379:2379 -p 2380:2380 -p 4001:4001"
     CNI_ARGS="\
       --network-plugin=cni \
-      --network-plugin-dir=/etc/cni/net.d"
+      --cni-conf-dir=/etc/cni/net.d \
+      --cni-bin-dir=/opt/cni/bin"
   fi
 }
 
