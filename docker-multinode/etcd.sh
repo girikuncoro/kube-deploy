@@ -21,7 +21,8 @@ kube::multinode::main
 
 kube::multinode::log_variables
 
-kube::multinode::turndown
+# TODO: turndown causing docker-daemon not to start
+# kube::multinode::turndown
 
 # We're running etcd in the bootstrap daemon, just
 # to make minimal changes to docker-multinode. It's
